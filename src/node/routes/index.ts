@@ -1,7 +1,8 @@
-import { logger } from "@coder/logger"
+import { logger, field } from "@coder/logger"
 import cookieParser from "cookie-parser"
 import * as express from "express"
 import { promises as fs } from "fs"
+import * as os from "os"
 import * as path from "path"
 import * as tls from "tls"
 import { Disposable } from "../../common/emitter"
@@ -9,11 +10,13 @@ import { HttpCode, HttpError } from "../../common/http"
 import { plural } from "../../common/util"
 import { App } from "../app"
 import { AuthType, DefaultedArgs } from "../cli"
-import { commit, rootPath } from "../constants"
+import { commit, rootPath, vsRootPath } from "../constants"
 import { Heart } from "../heart"
 import { redirect } from "../http"
 import { CoderSettings, SettingsProvider } from "../settings"
 import { UpdateProvider } from "../update"
+import { UserWorkspaceManager } from "../userWorkspace"
+import { userWorkspaceMiddleware, userWorkspaceInfoMiddleware } from "../userWorkspace/middleware"
 import { getMediaMime, paths } from "../util"
 import type { WebsocketRequest } from "../wsRouter"
 import * as domainProxy from "./domainProxy"
@@ -126,6 +129,23 @@ export const register = async (app: App, args: DefaultedArgs): Promise<Disposabl
     })
   })
 
+  // 创建用户工作区管理器
+  const workspaceManager = new UserWorkspaceManager({
+    baseWorkspaceDir: args["user-workspace-base-dir"] || path.join(os.homedir(), ".local", "share", "code-server"),
+    userWorkspaceSubDir: args["user-workspace-sub-dir"] || "users",
+    defaultWorkspaceType: (args["user-workspace-type"] as "folder" | "workspace") || "folder",
+    createWorkspaceFile: args["create-user-workspace-file"] || false,
+    workspaceFileTemplate: args["user-workspace-file-template"],
+  })
+
+  // 注册用户工作区中间件
+  app.router.use(userWorkspaceMiddleware(workspaceManager))
+  app.wsRouter.use(userWorkspaceMiddleware(workspaceManager))
+
+  // 注册用户工作区信息中间件
+  app.router.use(userWorkspaceInfoMiddleware())
+  app.wsRouter.use(userWorkspaceInfoMiddleware())
+
   app.router.use(express.json())
   app.router.use(express.urlencoded({ extended: true }))
 
@@ -141,6 +161,50 @@ export const register = async (app: App, args: DefaultedArgs): Promise<Disposabl
         if (path.endsWith("/serviceWorker.js")) {
           res.setHeader("Service-Worker-Allowed", "/")
         }
+      },
+    }),
+  )
+
+  // 添加 VS Code out 目录的静态文件服务
+  app.router.use(
+    "/out",
+    express.static(path.join(vsRootPath, "out"), {
+      cacheControl: commit !== "development",
+      fallthrough: false,
+      setHeaders: (res, filePath, stat) => {
+        // 确保正确的 MIME 类型
+        const ext = path.extname(filePath)
+        if (ext === ".css") {
+          res.setHeader("Content-Type", "text/css")
+        } else if (ext === ".js") {
+          res.setHeader("Content-Type", "application/javascript")
+        }
+      },
+    }),
+  )
+
+  // 添加 oss-dev/static/out 路由支持 (VS Code 产品路径)
+  app.router.use(
+    "/oss-dev/static/out",
+    express.static(path.join(vsRootPath, "out"), {
+      cacheControl: commit !== "development",
+      fallthrough: false,
+      setHeaders: (res, filePath, stat) => {
+        // 确保正确的 MIME 类型
+        const ext = path.extname(filePath)
+        if (ext === ".css") {
+          res.setHeader("Content-Type", "text/css")
+        } else if (ext === ".js") {
+          res.setHeader("Content-Type", "application/javascript")
+        }
+
+        // 添加调试日志
+        logger.debug(
+          "Static file served",
+          field("path", filePath),
+          field("extension", ext),
+          field("contentType", res.getHeader("Content-Type")),
+        )
       },
     }),
   )
@@ -176,5 +240,6 @@ export const register = async (app: App, args: DefaultedArgs): Promise<Disposabl
   return () => {
     heart.dispose()
     vscode.dispose()
+    workspaceManager.dispose()
   }
 }

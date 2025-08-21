@@ -7,11 +7,15 @@ variable "VERSION" {
 }
 
 variable "DOCKER_REGISTRY" {
-    default = "docker.io/codercom/code-server"
+    default = ""  # 禁用 Docker Hub
 }
 
 variable "GITHUB_REGISTRY" {
-    default = "ghcr.io/coder/code-server"
+    default = ""  # 禁用 GitHub Container Registry
+}
+
+variable "GALXE_REGISTRY" {
+    default = "us-west1-docker.pkg.dev/galxe-internal-artifacts/galxe-app/code-server"
 }
 
 group "default" {
@@ -21,6 +25,13 @@ group "default" {
         "code-server-ubuntu-noble",
         "code-server-fedora-39",
         "code-server-opensuse-tumbleweed",
+    ]
+}
+
+group "galxe" {
+    targets = [
+        "code-server-debian-12-galxe",
+        "code-server-ubuntu-focal-galxe",
     ]
 }
 
@@ -103,4 +114,28 @@ target "code-server-opensuse-tumbleweed" {
         BASE = "opensuse/tumbleweed"
     }
     platforms = ["linux/amd64", "linux/arm64"]
+}
+
+# Galxe 专用目标
+target "code-server-debian-12-galxe" {
+    dockerfile = "ci/release-image/Dockerfile"
+    tags = [
+        "${GALXE_REGISTRY}:latest",
+        "${GALXE_REGISTRY}:${VERSION}",
+        "${GALXE_REGISTRY}:debian",
+        "${GALXE_REGISTRY}:bookworm",
+    ]
+    platforms = ["linux/amd64"]
+}
+
+target "code-server-ubuntu-focal-galxe" {
+    dockerfile = "ci/release-image/Dockerfile"
+    tags = [
+        "${GALXE_REGISTRY}:ubuntu",
+        "${GALXE_REGISTRY}:focal",
+    ]
+    args = {
+        BASE = "ubuntu:focal"
+    }
+    platforms = ["linux/amd64"]
 }

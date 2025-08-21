@@ -285,6 +285,60 @@ docker run -it --name code-server -p 127.0.0.1:8080:8080 \
   codercom/code-server:latest
 ```
 
+### Docker with User Workspace Management
+
+For OAuth-based deployments with automatic user workspace management:
+
+```bash
+# Create workspace directory
+mkdir -p /home/workspace
+
+# Run with user workspace management
+docker run -d --name code-server-oauth -p 8080:8080 \
+  -v /home/workspace:/home/workspace \
+  -e USER_DATA_DIR=/home/workspace \
+  -e USER_WORKSPACE_BASE_DIR=/home/workspace \
+  -e USER_WORKSPACE_SUB_DIR=users \
+  -e USER_WORKSPACE_TYPE=folder \
+  -e CREATE_USER_WORKSPACE_FILE=false \
+  codercom/code-server:latest \
+  --auth none \
+  --user-data-dir /home/workspace \
+  --user-workspace-base-dir /home/workspace \
+  --user-workspace-sub-dir users \
+  --user-workspace-type folder \
+  --create-user-workspace-file false
+```
+
+Or use a custom Dockerfile:
+
+```dockerfile
+FROM codercom/code-server:latest
+
+# Create workspace directories
+RUN mkdir -p /home/workspace/users /home/workspace/extensions
+
+# Set environment variables
+ENV USER_DATA_DIR=/home/workspace
+ENV USER_WORKSPACE_BASE_DIR=/home/workspace
+ENV USER_WORKSPACE_SUB_DIR=users
+ENV USER_WORKSPACE_TYPE=folder
+ENV CREATE_USER_WORKSPACE_FILE=false
+
+# Expose port
+EXPOSE 8080
+
+# Start command
+CMD ["code-server", \
+     "--auth", "none", \
+     "--user-data-dir", "/home/workspace", \
+     "--user-workspace-base-dir", "/home/workspace", \
+     "--user-workspace-sub-dir", "users", \
+     "--user-workspace-type", "folder", \
+     "--create-user-workspace-file", "false", \
+     "--bind-addr", "0.0.0.0:8080"]
+```
+
 Our official image supports `amd64` and `arm64`. For `arm32` support, you can
 use a [community-maintained code-server
 alternative](https://hub.docker.com/r/linuxserver/code-server).

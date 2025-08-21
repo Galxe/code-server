@@ -94,6 +94,14 @@ export interface UserProvidedArgs extends UserProvidedCodeArgs {
   "welcome-text"?: string
   "abs-proxy-base-path"?: string
   i18n?: string
+
+  // 用户工作区配置
+  "user-workspace-base-dir"?: string
+  "user-workspace-sub-dir"?: string
+  "user-workspace-type"?: "folder" | "workspace"
+  "create-user-workspace-file"?: boolean
+  "user-workspace-file-template"?: string
+
   /* Positional arguments. */
   _?: string[]
 }
@@ -302,6 +310,30 @@ export const options: Options<Required<UserProvidedArgs>> = {
     type: "string",
     path: true,
     description: "Path to JSON file with custom translations. Merges with default strings and supports all i18n keys.",
+  },
+
+  // 用户工作区配置选项
+  "user-workspace-base-dir": {
+    type: "string",
+    path: true,
+    description: "Base directory for user workspaces (defaults to user-data-dir).",
+  },
+  "user-workspace-sub-dir": {
+    type: "string",
+    description: "Subdirectory name for user workspaces (default: 'users').",
+  },
+  "user-workspace-type": {
+    type: "string",
+    description: "Default workspace type for users: 'folder' or 'workspace' (default: 'folder').",
+  },
+  "create-user-workspace-file": {
+    type: "boolean",
+    description: "Create .code-workspace file for each user (default: false).",
+  },
+  "user-workspace-file-template": {
+    type: "string",
+    path: true,
+    description: "Path to custom workspace file template (optional).",
   },
 }
 
@@ -527,6 +559,23 @@ export async function setDefaults(cliArgs: UserProvidedArgs, configArgs?: Config
     args["session-socket"] = path.join(args["user-data-dir"], "code-server-ipc.sock")
   }
   process.env.CODE_SERVER_SESSION_SOCKET = args["session-socket"]
+
+  // 用户工作区默认值设置
+  if (!args["user-workspace-base-dir"]) {
+    args["user-workspace-base-dir"] = args["user-data-dir"]
+  }
+
+  if (!args["user-workspace-sub-dir"]) {
+    args["user-workspace-sub-dir"] = "users"
+  }
+
+  if (!args["user-workspace-type"]) {
+    args["user-workspace-type"] = "folder"
+  }
+
+  if (args["create-user-workspace-file"] === undefined) {
+    args["create-user-workspace-file"] = false
+  }
 
   // --verbose takes priority over --log and --log takes priority over the
   // environment variable.

@@ -278,6 +278,51 @@ Google), you can do this with a reverse proxy such as:
 - [oauth2-proxy](https://oauth2-proxy.github.io/oauth2-proxy/)
 - [Cloudflare Access](https://www.cloudflare.com/zero-trust/products/access/)
 
+### OAuth with User Workspace Management
+
+When using external authentication with `--auth none`, code-server automatically
+creates and manages user-specific workspaces. The OAuth proxy should forward
+these headers:
+
+- `X-Forwarded-User`: Username (required)
+- `X-Forwarded-Email`: User email (required)
+- `X-Forwarded-Preferred-Username`: Preferred username (optional)
+- `X-Forwarded-Groups`: User groups (optional)
+
+#### Configuration Options
+
+```bash
+# Basic user workspace configuration
+code-server --auth none \
+  --user-workspace-base-dir /home/workspace \
+  --user-workspace-sub-dir users \
+  --user-workspace-type folder \
+  --create-user-workspace-file false
+
+# Or use configuration file
+code-server --config /etc/code-server/config.yaml
+```
+
+#### Configuration File Example
+
+```yaml
+# config.yaml
+bind-addr: 0.0.0.0:8080
+auth: none
+
+# User workspace configuration
+user-workspace-base-dir: /home/workspace
+user-workspace-sub-dir: users
+user-workspace-type: folder
+create-user-workspace-file: false
+
+# User data directory
+user-data-dir: /home/workspace
+extensions-dir: /home/workspace/extensions
+```
+
+For more details, see [User Workspace Management](USER_WORKSPACE.md).
+
 ## HTTPS and self-signed certificates
 
 For HTTPS, you can use a self-signed certificate by:

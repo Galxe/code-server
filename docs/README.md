@@ -14,6 +14,7 @@ access it in the browser.
 - Use cloud servers to speed up tests, compilations, downloads, and more
 - Preserve battery life when you're on the go; all intensive tasks run on your
   server
+- **NEW**: OAuth-based user workspace management with automatic workspace creation
 
 ## Requirements
 
@@ -60,6 +61,17 @@ code-server.
 
 We also have an in-depth [setup and
 configuration](https://coder.com/docs/code-server/latest/guide) guide.
+
+### User Workspace Management
+
+For teams using OAuth authentication, code-server now supports automatic user workspace management:
+
+- **Automatic workspace creation** based on OAuth user information
+- **Configurable directory structure** for user isolation
+- **Smart redirection** to user-specific workspaces
+- **Multiple workspace types** (folder or .code-workspace files)
+
+See [User Workspace Management](USER_WORKSPACE.md) for detailed configuration and deployment instructions.
 
 ## Questions?
 

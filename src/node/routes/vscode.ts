@@ -128,6 +128,26 @@ router.get("/", ensureVSCodeLoaded, async (req, res, next) => {
     })
   }
 
+  // 新增：检查用户特定工作区
+  if ((req as any).userWorkspace && !req.query.folder && !req.query.workspace) {
+    const userWorkspace = (req as any).userWorkspace
+    const queryParams: any = {}
+
+    if (userWorkspace.workspaceType === "workspace") {
+      // 工作区文件模式：使用 workspace 参数指向 .code-workspace 文件
+      queryParams.workspace = userWorkspace.workspacePath
+    } else {
+      // 文件夹模式：使用 folder 参数指向目录（不是文件）
+      // 确保路径指向目录而不是工作区文件
+      const folderPath = userWorkspace.workspacePath.endsWith(".code-workspace")
+        ? path.dirname(userWorkspace.workspacePath)
+        : userWorkspace.workspacePath
+      queryParams.folder = folderPath
+    }
+
+    return redirect(req, res, "/", queryParams)
+  }
+
   if (NO_FOLDER_OR_WORKSPACE_QUERY && !FOLDER_OR_WORKSPACE_WAS_CLOSED) {
     const settings = await req.settings.read()
     const lastOpened = settings.query || {}

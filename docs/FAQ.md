@@ -223,10 +223,36 @@ configuration.
 
 code-server tries the following in this order:
 
-1. The `workspace` query parameter
-2. The `folder` query parameter
-3. The workspace or directory passed via the command line
-4. The last opened workspace or directory
+1. **User-specific workspace** (when using OAuth with `--auth none`)
+2. The `workspace` query parameter
+3. The `folder` query parameter
+4. The workspace or directory passed via the command line
+5. The last opened workspace or directory
+
+### OAuth User Workspace Management
+
+When using external authentication with `--auth none`, code-server automatically
+creates user-specific workspaces based on OAuth headers:
+
+- **Automatic workspace creation**: Each user gets a unique workspace directory
+- **Smart redirection**: Users are automatically redirected to their workspace
+- **Configurable paths**: Customize base directory and subdirectory structure
+- **Multiple workspace types**: Support for both folder and `.code-workspace` file modes
+
+#### Configuration
+
+```bash
+# Enable user workspace management
+code-server --auth none \
+  --user-workspace-base-dir /home/workspace \
+  --user-workspace-sub-dir users \
+  --user-workspace-type folder
+
+# Or use configuration file
+code-server --config config.yaml
+```
+
+For detailed configuration options, see [User Workspace Management](USER_WORKSPACE.md).
 
 ## How do I access my Documents/Downloads/Desktop folders in code-server on macOS?
 
