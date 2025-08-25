@@ -11,15 +11,18 @@ export class OAuthUserParser {
    */
   static parseUserFromHeaders(req: any): UserInfo | null {
     const email = req.headers["x-forwarded-email"] as string
-    const username = req.headers["x-forwarded-user"] as string
     const preferredUsername = req.headers["x-forwarded-preferred-username"] as string
-    const groups = req.headers["x-forwarded-groups"] as string
 
-    if (!email || !username) {
+    // 添加基本日志，查看实际接收到的头信息
+    logger.info("Raw OAuth headers", field("headers", {
+      email: req.headers["x-forwarded-email"],
+      preferredUsername: req.headers["x-forwarded-preferred-username"]
+    }))
+
+    if (!email) {
       logger.debug(
         "Missing required OAuth headers",
         field("email", !!email),
-        field("username", !!username),
         field(
           "headers",
           Object.keys(req.headers).filter((h) => h.startsWith("x-forwarded-")),
@@ -28,23 +31,19 @@ export class OAuthUserParser {
       return null
     }
 
+    // 从 email 中提取 username（@ 符号前的部分）
+    const username = email.split('@')[0]
+
     const userInfo: UserInfo = {
       email: email.toLowerCase().trim(),
       username: username.toLowerCase().trim(),
       preferredUsername: preferredUsername?.toLowerCase().trim(),
-      groups: groups
-        ? groups
-            .split(",")
-            .map((g) => g.trim())
-            .filter((g) => g)
-        : undefined,
     }
 
     logger.debug(
       "Parsed OAuth user info",
       field("email", userInfo.email),
       field("username", userInfo.username),
-      field("hasGroups", !!userInfo.groups),
     )
 
     return userInfo
@@ -89,7 +88,6 @@ export class OAuthUserParser {
         ?.toLowerCase()
         .trim()
         .replace(/[^a-zA-Z0-9_-]/g, "_"),
-      groups: userInfo.groups?.map((g) => g.trim().replace(/[^a-zA-Z0-9_-]/g, "_")).filter((g) => g),
     }
   }
 }

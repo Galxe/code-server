@@ -34,6 +34,8 @@ export class UserWorkspaceManager {
     }
 
     const userId = this.generateUserId(sanitizedUserInfo)
+    
+    logger.info("Ensuring user workspace", field("originalUserInfo", { email: userInfo.email, username: userInfo.username }), field("sanitizedUserInfo", sanitizedUserInfo), field("generatedUserId", userId))
 
     try {
       // Check if workspace already exists
@@ -162,17 +164,13 @@ export class UserWorkspaceManager {
    * 生成用户ID
    */
   private generateUserId(userInfo: UserInfo): string {
-    // 使用用户名作为目录名，更直观易识别
-    // 清理用户名，移除特殊字符，只保留字母、数字、下划线、连字符
-    const cleanUsername = userInfo.username.replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase()
-
-    // 如果清理后的用户名为空，则使用邮箱前缀
-    if (!cleanUsername) {
-      const emailPrefix = userInfo.email.split("@")[0]
-      return emailPrefix.replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase()
-    }
-
-    return cleanUsername
+    // 直接使用邮箱前缀作为目录名，更可靠
+    const emailPrefix = userInfo.email.split("@")[0]
+    const cleanEmailPrefix = emailPrefix.replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase()
+    
+    logger.info("Generated user ID from email", field("email", userInfo.email), field("emailPrefix", emailPrefix), field("cleanEmailPrefix", cleanEmailPrefix))
+    
+    return cleanEmailPrefix
   }
 
   /**

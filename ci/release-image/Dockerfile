@@ -1,6 +1,5 @@
-# syntax=docker/dockerfile:experimental
-
 ARG BASE=debian:12
+
 FROM scratch AS packages
 COPY release-packages/code-server*.deb /tmp/
 
@@ -45,11 +44,13 @@ RUN ARCH="$(dpkg --print-architecture)" \
   && printf "user: coder\ngroup: coder\n" > /etc/fixuid/config.yml
 
 COPY ci/release-image/entrypoint.sh /usr/bin/entrypoint.sh
+
+# Install package using mount from packages stage
 RUN --mount=from=packages,src=/tmp,dst=/tmp/packages dpkg -i /tmp/packages/code-server*$(dpkg --print-architecture).deb
 
 # Allow users to have scripts run on container startup to prepare workspace.
 # https://github.com/coder/code-server/issues/5177
-ENV ENTRYPOINTD=${HOME}/entrypoint.d
+ENV ENTRYPOINTD=/home/coder/entrypoint.d
 
 EXPOSE 8080
 # This way, if someone sets $DOCKER_USER, docker-exec will still work as

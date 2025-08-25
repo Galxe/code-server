@@ -44,10 +44,9 @@ rsync() {
   command rsync -a --del "$@"
 }
 
-# Allow environment variables to override
-ARCH="${ARCH:-$(arch)}"
+ARCH="$(arch)"
 export ARCH
-OS="${OS:-$(os)}"
+OS=$(os)
 export OS
 
 # RELEASE_PATH is the destination directory for the release from the root.

@@ -1,7 +1,7 @@
 {
   "name": "code-server",
   "license": "MIT",
-  "version": "0.0.0",
+  "version": "4.103.1-galxe-v5",
   "description": "Run VS Code on a remote server.",
   "homepage": "https://github.com/coder/code-server",
   "bugs": {
@@ -28,7 +28,6 @@
     "postinstall": "./ci/dev/postinstall.sh",
     "publish:npm": "./ci/steps/publish-npm.sh",
     "publish:docker": "./ci/steps/docker-buildx-push.sh",
-  "publish:docker:galxe": "./ci/steps/docker-buildx-push-galxe.sh",
     "fmt": "npm run prettier && ./ci/dev/doctoc.sh",
     "lint:scripts": "./ci/dev/lint-scripts.sh",
     "lint:ts": "eslint --max-warnings=0 --fix $(git ls-files '*.ts' '*.js' | grep -v 'lib/vscode')",
